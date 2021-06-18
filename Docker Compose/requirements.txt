@@ -1,0 +1,4 @@
+celery==5.1.0
+redis==3.5.3
+selenium==3.141.0
+PyVirtualDisplay==2.2

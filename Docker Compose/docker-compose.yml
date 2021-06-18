@@ -1,0 +1,40 @@
+
+version: '2'
+services:
+  rabbitmq:
+    image: rabbitmq:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=mypass
+    ports:
+        - 15672:15672
+        - 5672:5672
+  redis:
+    image: redis:latest
+    ports:
+    - "6379:6379"
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: madefire/chordtest
+    command: ['celery', '-A', 'tasks', 'worker', '-l', 'info']
+    environment:
+      - BROKER_URL=amqp://admin:mypass@rabbitmq:5672//
+    volumes:
+      - ./:/app/
+    depends_on:
+      - rabbitmq
+      - redis
+  beat:
+    build:
+      context: ./
+    image: beat-image
+    container_name: beat
+    volumes:
+      - ./:/app/
+    depends_on:
+      - rabbitmq
+      - worker
+    command:
+      ["celery", "--broker", "amqp://admin:mypass@rabbitmq:5672//", "-A", "tasks", "beat", "--loglevel=info"]
